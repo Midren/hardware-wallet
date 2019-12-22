@@ -46,6 +46,7 @@
 #include "tiny-firmware/firmware/droplet.h"
 #include "tiny-firmware/firmware/skyparams.h"
 #include "tiny-firmware/firmware/entropy.h"
+#include "fsm_bitcoin_impl.h"
 
 extern uint8_t msg_resp[MSG_OUT_SIZE] __attribute__((aligned));
 

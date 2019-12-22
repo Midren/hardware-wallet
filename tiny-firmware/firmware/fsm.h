@@ -54,6 +54,7 @@ void fsm_msgWordAck(WordAck* msg);
 void fsm_msgSignTx(SignTx* msg);
 void fsm_msgTxAck(TxAck* msg);
 void fsm_msgBitcoinTxAck(BitcoinTxAck* msg);
+
 ErrCode_t requestConfirmTransaction(char *strCoin, char *strHour, TransactionSign *msg, uint32_t i);
 
 #endif

@@ -554,7 +554,12 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
         return ErrFailed;
     }
     memcpy(context->coin_name, msg->coin_name, 36 * sizeof(char));
-    context->state = InnerHashInputs;
+    msg->coin_name[7] = '\0';
+    if(!strcmp(msg->coin_name, "Skycoin")) {
+        context->state = InnerHashInputs;
+    } else if (!strcmp(msg->coin_name, "Bitcoin")) {
+        context->state = BTC_Outputs;
+    }
     context->current_nbIn = 0;
     context->current_nbOut = 0;
     context->lock_time = msg->lock_time;
@@ -740,10 +745,4 @@ ErrCode_t msgTxAckImpl(TxAck *msg, TxRequest *resp) {
     if (resp->request_type == TxRequest_RequestType_TXFINISHED)
         TxSignCtx_Destroy(ctx);
     return ErrOk;
-}
-
-ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp){
-  UNUSED(msg);
-  UNUSED(resp);
-  return ErrOk;
 }

@@ -26,4 +26,6 @@
 
 ErrCode_t msgBitcoinAddressImpl(BitcoinAddress *msg, ResponseSkycoinAddress *resp);
 
+ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp);
+
 #endif
