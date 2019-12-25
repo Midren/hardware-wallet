@@ -97,6 +97,30 @@ ErrCode_t reqConfirmBitcoinTransaction(uint64_t coins, char *address) {
     return err;
 }
 
+ErrCode_t msgSignBitcoinTransactionMessageImpl(uint8_t *message_digest, uint32_t index, char *signed_message) {
+    uint8_t pubkey[BITCOIN_PUBKEY_LEN] = {0};
+    uint8_t seckey[BITCOIN_SECKEY_LEN] = {0};
+    uint8_t signature[BITCOIN_SIG_LEN];
+    ErrCode_t res = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index, &bitcoin_address_from_pubkey);
+    if (res != ErrOk) {
+        return res;
+    }
+    int signres = skycoin_ecdsa_sign_digest(seckey, message_digest, signature);
+    if (signres == -2) {
+        // Fail due to empty digest
+        return ErrInvalidArg;
+    } else if (res) {
+        // Too many retries without a valid signature
+        // -> fail with an error
+        return ErrFailed;
+    }
+    tohex(signed_message, signature, BITCOIN_SIG_LEN);
+#if EMULATOR
+    printf("Size_sign: %d, sig(hex): %s\n", BITCOIN_SIG_LEN * 2, signed_message);
+#endif
+    return res;
+}
+
 ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
     TxSignContext *ctx = TxSignCtx_Get();
     if (ctx->state != Start && ctx->state != BTC_Outputs && ctx->state != BTC_Signature) {
@@ -164,8 +188,12 @@ ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
             }
             uint8_t signCount = 0;
             for (uint8_t i = 0; i < msg->tx.inputs_count; ++i) {
-                msgSignTransactionMessageImpl(msg->tx.inputs->prev_hash.bytes, msg->tx.inputs[i].address_n,
-                                              resp->sign_result[signCount].signature);
+                ErrCode_t err = msgSignBitcoinTransactionMessageImpl(msg->tx.inputs->prev_hash.bytes,
+                                                                     msg->tx.inputs[i].address_n,
+                                                                     resp->sign_result[signCount].signature);
+                if (err != ErrOk)
+                    return err;
+                resp->sign_result[signCount].has_signature = true;
                 resp->sign_result[signCount].has_signature_index = true;
                 resp->sign_result[signCount].signature_index = i;
                 signCount++;

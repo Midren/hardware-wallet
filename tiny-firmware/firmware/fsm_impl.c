@@ -579,7 +579,11 @@ ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
     resp->details.has_request_index = true;
     resp->details.request_index = 1;
     memcpy(resp->details.tx_hash, msg->tx_hash, 65 * sizeof(char));
-    resp->request_type = TxRequest_RequestType_TXINPUT;
+    if(!strcmp(msg->coin_name, "Skycoin")) {
+        resp->request_type = TxRequest_RequestType_TXINPUT;
+    } else if (!strcmp(msg->coin_name, "Bitcoin")) {
+        resp->request_type = TxRequest_RequestType_TXOUTPUT;
+    }
     return ErrOk;
 }
 

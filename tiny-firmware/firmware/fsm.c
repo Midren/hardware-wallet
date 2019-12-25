@@ -650,7 +650,7 @@ void fsm_msgBitcoinTxAck(BitcoinTxAck *msg) {
             msg_write(MessageType_MessageType_TxRequest, resp);
             break;
         case ErrInvalidArg:
-            fsm_sendFailure(FailureType_Failure_DataError, _("Invalid data on TxAck message."), &msgType);
+            fsm_sendFailure(FailureType_Failure_DataError, _("Invalid data on BitcoinTxAck message."), &msgType);
             break;
         case ErrActionCancelled:
             fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL, &msgType);
@@ -663,5 +663,4 @@ void fsm_msgBitcoinTxAck(BitcoinTxAck *msg) {
             break;
     }
     layoutHome();
-    return;
 }
