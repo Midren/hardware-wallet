@@ -538,9 +538,9 @@ ErrCode_t msgRecoveryDeviceImpl(RecoveryDevice *msg, ErrCode_t (*funcConfirmReco
 
 ErrCode_t msgSignTxImpl(SignTx *msg, TxRequest *resp) {
 #if EMULATOR
-    printf("%s: %d. nbOut: %d\n",
+    printf("%s: %d. nbOut: %d coin: %s\n",
         _("Transaction signed nbIn"),
-        msg->inputs_count, msg->outputs_count);
+        msg->inputs_count, msg->outputs_count, msg->coin_name);
 #endif
     TxSignContext *context = TxSignCtx_Get();
     if (context->state != Destroyed) {

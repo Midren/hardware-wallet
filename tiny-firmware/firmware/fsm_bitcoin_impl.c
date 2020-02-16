@@ -21,35 +21,22 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-#include <libopencm3/stm32/flash.h>
-#include <libopencm3/stm32/flash.h>
-
 #include "tiny-firmware/firmware/droplet.h"
 #include "tiny-firmware/firmware/entropy.h"
-#include "tiny-firmware/firmware/fsm.h"
 #include "tiny-firmware/firmware/fsm_impl.h"
 #include "tiny-firmware/firmware/gettext.h"
 #include "tiny-firmware/firmware/layout2.h"
-#include "tiny-firmware/firmware/messages.h"
 #include "tiny-firmware/firmware/storage.h"
 #include "tiny-firmware/firmware/protect.h"
 #include "tiny-firmware/firmware/recovery.h"
-#include "tiny-firmware/firmware/reset.h"
 #include "tiny-firmware/firmware/skyparams.h"
 
-#include "tiny-firmware/rng.h"
 #include "tiny-firmware/oled.h"
-#include "tiny-firmware/memory.h"
-#include "tiny-firmware/usb.h"
-#include "tiny-firmware/util.h"
 
 #include "skycoin-crypto/tools/base58.h"
-#include "skycoin-crypto/tools/bip32.h"
-#include "skycoin-crypto/tools/bip39.h"
-#include "skycoin-crypto/check_digest.h"
+#include "skycoin-crypto/tools/ecdsa.h"
 #include "skycoin-crypto/bitcoin_constants.h"
 #include "skycoin-crypto/bitcoin_crypto.h"
-#include "skycoin-crypto/skycoin_signature.h"
 #include "skycoin-crypto/skycoin_crypto.h"
 
 #include "fsm_bitcoin_impl.h"
@@ -100,12 +87,13 @@ ErrCode_t reqConfirmBitcoinTransaction(uint64_t coins, char *address) {
 ErrCode_t msgSignBitcoinTransactionMessageImpl(uint8_t *message_digest, uint32_t index, char *signed_message) {
     uint8_t pubkey[BITCOIN_PUBKEY_LEN] = {0};
     uint8_t seckey[BITCOIN_SECKEY_LEN] = {0};
-    uint8_t signature[BITCOIN_SIG_LEN];
+    uint8_t signature_rs[BITCOIN_RS_SIG_LEN];
+    uint8_t signature_der[BITCOIN_DER_SIG_LEN];
     ErrCode_t res = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index, &bitcoin_address_from_pubkey);
     if (res != ErrOk) {
         return res;
     }
-    int signres = skycoin_ecdsa_sign_digest(seckey, message_digest, signature);
+    int signres = skycoin_ecdsa_sign_digest(seckey, message_digest, signature_rs);
     if (signres == -2) {
         // Fail due to empty digest
         return ErrInvalidArg;
@@ -114,9 +102,10 @@ ErrCode_t msgSignBitcoinTransactionMessageImpl(uint8_t *message_digest, uint32_t
         // -> fail with an error
         return ErrFailed;
     }
-    tohex(signed_message, signature, BITCOIN_SIG_LEN);
+    int len = ecdsa_sig_to_der(signature_rs, signature_der);
+    tohex(signed_message, signature_der, len);
 #if EMULATOR
-    printf("Size_sign: %d, sig(hex): %s\n", BITCOIN_SIG_LEN * 2, signed_message);
+    printf("Size_sign: %d, sig(hex): %s\n", len * 2, signed_message);
 #endif
     return res;
 }
@@ -132,11 +121,11 @@ ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
         case BTC_Outputs:
             printf("-> Outputs\n");
             break;
-        case Signature:
+        case BTC_Signature:
             printf("-> Signatures\n");
             break;
         default:
-            printf("-> Unexpected\n");
+            printf("-> Unexpected: %d\n", ctx->state);
             break;
     }
     for (uint32_t i = 0; i < msg->tx.inputs_cnt; ++i) {
