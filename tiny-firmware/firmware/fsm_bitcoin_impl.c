@@ -160,8 +160,8 @@ ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
                 uint8_t b58string[36];
                 b58tobin(b58string, &len, msg->tx.outputs[i].address);
                 memcpy(outputs[i].address, &b58string[36 - len], len);
+                ctx->current_nbOut++;
             }
-            ctx->current_nbOut++;
             if (ctx->current_nbOut != ctx->nbOut) {
                 resp->request_type = TxRequest_RequestType_TXOUTPUT;
             } else {
@@ -187,7 +187,7 @@ ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
                 resp->sign_result[signCount].signature_index = i;
                 signCount++;
             }
-            ctx->current_nbIn++;
+            ctx->current_nbIn += signCount;
             resp->sign_result_count = signCount;
             if (ctx->current_nbIn != ctx->nbIn)
                 resp->request_type = TxRequest_RequestType_TXINPUT;
