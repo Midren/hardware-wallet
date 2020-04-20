@@ -56,7 +56,7 @@ ErrCode_t msgBitcoinAddressImpl(BitcoinAddress *msg, ResponseSkycoinAddress *res
         return ErrMnemonicRequired;
     }
 
-    if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index, &bitcoin_address_from_pubkey) !=
+    if (fsm_getKeyPairAtIndex(msg->address_n, pubkey, seckey, resp, start_index, &bitcoin_address_from_pubkey, false) !=
         ErrOk) {
         return ErrAddressGeneration;
     }
@@ -89,7 +89,7 @@ ErrCode_t msgSignBitcoinTransactionMessageImpl(uint8_t *message_digest, uint32_t
     uint8_t seckey[BITCOIN_SECKEY_LEN] = {0};
     uint8_t signature_rs[BITCOIN_RS_SIG_LEN];
     uint8_t signature_der[BITCOIN_DER_SIG_LEN];
-    ErrCode_t res = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index, &bitcoin_address_from_pubkey);
+    ErrCode_t res = fsm_getKeyPairAtIndex(1, pubkey, seckey, NULL, index, &bitcoin_address_from_pubkey, false);
     if (res != ErrOk) {
         return res;
     }
