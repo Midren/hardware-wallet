@@ -178,7 +178,7 @@ ErrCode_t msgBitcoinTxAckImpl(BitcoinTxAck *msg, TxRequest *resp) {
             uint8_t signCount = 0;
             for (uint8_t i = 0; i < msg->tx.inputs_count; ++i) {
                 ErrCode_t err = msgSignBitcoinTransactionMessageImpl(msg->tx.inputs->prev_hash.bytes,
-                                                                     msg->tx.inputs[i].address_n,
+                                                                     msg->tx.inputs[i].index,
                                                                      resp->sign_result[signCount].signature);
                 if (err != ErrOk)
                     return err;
